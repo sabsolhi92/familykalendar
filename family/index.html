@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
     <title>Kalendar Family</title>
     
     <link rel="icon" href="a2c48970-2bea-4726-b2f2-8d787fe5987b.jpg">
@@ -12,7 +13,6 @@
     <meta name="apple-mobile-web-app-title" content="Kalendar">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     
     <style>
         body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -42,33 +42,51 @@
             0% { transform: translateY(0px) scale(1) rotate(0deg); }
             100% { transform: translateY(-40px) scale(1.1) rotate(20deg); }
         }
-        
-        /* Utility classes */
-        .hidden { display: none !important; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 
-    <!-- MEMUATKAN FIREBASE (Versi Compat yang stabil untuk semua server) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <!-- MEMUATKAN FIREBASE (Versi Paling Stabil Untuk Cloudflare) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.1/firebase-app-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.1/firebase-auth-compat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.8.1/firebase-firestore-compat.min.js"></script>
+
+    <!-- MEMUATKAN REACT & BABEL (Versi Paling Stabil) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-    <!-- Latar Belakang Ceria -->
-    <div id="bg-decorations" class="fixed inset-0 overflow-hidden pointer-events-none z-0 hidden">
-        <div class="floating-shape w-40 h-40 bg-pink-400/30 -top-10 -left-10" style="animation-duration: 7s"></div>
-        <div class="floating-shape w-64 h-64 bg-blue-400/30 top-32 -right-20" style="animation-delay: 1s; animation-duration: 9s"></div>
-        <div class="floating-shape w-32 h-32 bg-yellow-400/30 bottom-24 left-12" style="animation-delay: 2s; animation-duration: 8s"></div>
-        <div class="floating-shape w-56 h-56 bg-purple-400/30 -bottom-16 right-10" style="animation-delay: 3s; animation-duration: 10s"></div>
-        <div class="floating-shape w-24 h-24 bg-green-400/30 top-1/2 left-1/3" style="animation-delay: 4s; animation-duration: 6s"></div>
-    </div>
+    <div id="root"></div>
 
-    <div id="app-container" class="relative z-10 w-full h-full"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
+        // --- IKON-IKON SVG ---
+        const CalendarIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>;
+        const User = ({className, style}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} style={style}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+        const Plus = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>;
+        const Trash2 = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>;
+        const EditIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>;
+        const ChevronLeft = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"></polyline></svg>;
+        const ChevronRight = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"></polyline></svg>;
+        const Lock = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
+        const Unlock = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>;
+        const XIcon = ({className}) => <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+
+        // --- DATA KONFIGURASI AHLI KELUARGA ---
+        const FAMILY_MEMBERS = [
+            { id: 'fateemah', name: 'Fateemah Azizah', short: 'Fateemah', theme: 'bg-pink-100 text-pink-800 border-pink-300', dot: 'bg-pink-500', hex: '#ec4899', img: 'fateemah.png' },
+            { id: 'irbadh', name: 'Irbadh Tirmeedzi', short: 'Irbadh', theme: 'bg-blue-100 text-blue-800 border-blue-300', dot: 'bg-blue-500', hex: '#3b82f6', img: 'irbadh.png' },
+            { id: 'dewi', name: 'Dewi Haleema', short: 'Dewi', theme: 'bg-purple-100 text-purple-800 border-purple-300', dot: 'bg-purple-500', hex: '#a855f7', img: 'dewi.png' },
+            { id: 'mama', name: 'Mama', short: 'Mama', theme: 'bg-[#f5f5dc] text-[#8b7d3a] border-[#e3e3c8]', dot: 'bg-[#d4c473]', hex: '#d4c473', img: 'mama.png' },
+            { id: 'babah', name: 'Babah', short: 'Babah', theme: 'bg-red-100 text-red-800 border-red-300', dot: 'bg-red-500', hex: '#ef4444', img: 'babah.png' }
+        ];
+
+        const MENU_ALL = { id: 'keseluruhan', name: 'Kalendar Keseluruhan', short: 'Semua', theme: 'bg-indigo-100 text-indigo-800 border-indigo-300', hex: '#4f46e5' };
+
+        const MONTH_NAMES = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
+        const DAYS_SHORT = ["Ahd", "Isn", "Sel", "Rab", "Kha", "Jum", "Sab"];
+
         // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDnewgXMWei0LL6QSSGwH8HLEAw7wSwjsU",
@@ -80,447 +98,483 @@
         };
         const APP_ID = 'kalendar-family';
 
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const auth = firebase.auth();
         const db = firebase.firestore();
 
-        // --- DATA KONFIGURASI AHLI KELUARGA ---
-        const FAMILY_MEMBERS = [
-            { id: 'fateemah', name: 'Fateemah Azizah', short: 'Fateemah', theme: 'bg-pink-100 text-pink-800 border-pink-300', dot: 'bg-pink-500', hex: '#ec4899', img: 'fateemah.png' },
-            { id: 'irbadh', name: 'Irbadh Tirmeedzi', short: 'Irbadh', theme: 'bg-blue-100 text-blue-800 border-blue-300', dot: 'bg-blue-500', hex: '#3b82f6', img: 'irbadh.png' },
-            { id: 'dewi', name: 'Dewi Haleema', short: 'Dewi', theme: 'bg-purple-100 text-purple-800 border-purple-300', dot: 'bg-purple-500', hex: '#a855f7', img: 'dewi.png' },
-            { id: 'mama', name: 'Mama', short: 'Mama', theme: 'bg-[#f5f5dc] text-[#8b7d3a] border-[#e3e3c8]', dot: 'bg-[#d4c473]', hex: '#d4c473', img: 'mama.png' },
-            { id: 'babah', name: 'Babah', short: 'Babah', theme: 'bg-red-100 text-red-800 border-red-300', dot: 'bg-red-500', hex: '#ef4444', img: 'babah.png' }
-        ];
-        const MENU_ALL = { id: 'keseluruhan', name: 'Kalendar Keseluruhan', short: 'Semua', theme: 'bg-indigo-100 text-indigo-800 border-indigo-300', hex: '#4f46e5' };
-        const MONTH_NAMES = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
-        const DAYS_SHORT = ["Ahd", "Isn", "Sel", "Rab", "Kha", "Jum", "Sab"];
+        // Komponen Latar Belakang Ceria
+        const BackgroundDecorations = () => (
+            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+                <div className="floating-shape w-40 h-40 bg-pink-400/30 -top-10 -left-10" style={{ animationDelay: '0s', animationDuration: '7s' }}></div>
+                <div className="floating-shape w-64 h-64 bg-blue-400/30 top-32 -right-20" style={{ animationDelay: '1s', animationDuration: '9s' }}></div>
+                <div className="floating-shape w-32 h-32 bg-yellow-400/30 bottom-24 left-12" style={{ animationDelay: '2s', animationDuration: '8s' }}></div>
+                <div className="floating-shape w-56 h-56 bg-purple-400/30 -bottom-16 right-10" style={{ animationDelay: '3s', animationDuration: '10s' }}></div>
+                <div className="floating-shape w-24 h-24 bg-green-400/30 top-1/2 left-1/3" style={{ animationDelay: '4s', animationDuration: '6s' }}></div>
+            </div>
+        );
 
-        // --- STATE PENGURUSAN ---
-        let appState = {
-            view: 'splash', // splash, menu, calendar
-            activeTab: 'keseluruhan',
-            events: [],
-            user: null,
-            currentDate: new Date(),
-            isUnlocked: false,
-            showLoginModal: false,
-            showDayModal: false,
-            selectedDate: null,
-            editingEvent: null,
-            imageErrors: {}
-        };
+        function App() {
+            const [appView, setAppView] = useState('splash'); 
+            const [activeTab, setActiveTab] = useState('keseluruhan');
+            
+            const [events, setEvents] = useState([]);
+            const [user, setUser] = useState(null);
+            const [currentDate, setCurrentDate] = useState(new Date());
 
-        const container = document.getElementById('app-container');
-        const bgDecorations = document.getElementById('bg-decorations');
+            // UI States
+            const [imageErrors, setImageErrors] = useState({});
+            const [isUnlocked, setIsUnlocked] = useState(false);
+            const [showLoginModal, setShowLoginModal] = useState(false);
+            const [passwordInput, setPasswordInput] = useState('');
+            const [passwordError, setPasswordError] = useState('');
 
-        // --- INIT FIREBASE ---
-        auth.signInAnonymously().catch(console.error);
-        auth.onAuthStateChanged((u) => {
-            appState.user = u;
-            if (u) {
-                db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events')
-                .onSnapshot((snapshot) => {
-                    const loadedEvents = [];
-                    snapshot.forEach((doc) => loadedEvents.push({ id: doc.id, ...doc.data() }));
-                    loadedEvents.sort((a, b) => new Date(a.startDate || a.date) - new Date(b.startDate || b.date));
-                    appState.events = loadedEvents;
-                    renderApp();
-                });
-            }
-        });
+            // Mod Paparan Hari & Kemaskini
+            const [showDayModal, setShowDayModal] = useState(false);
+            const [selectedDate, setSelectedDate] = useState(null);
+            const [editingEvent, setEditingEvent] = useState(null);
 
-        // --- FUNGSI PEMBANTU (HELPERS) ---
-        const updateState = (newState) => {
-            appState = { ...appState, ...newState };
-            renderApp();
-        };
+            // Form Tambah Aktiviti
+            const [newEventTitle, setNewEventTitle] = useState('');
+            const [newEventTime, setNewEventTime] = useState('');
+            const [newEventStartDate, setNewEventStartDate] = useState('');
+            const [newEventEndDate, setNewEventEndDate] = useState('');
 
-        window.handleImageError = (id) => {
-            appState.imageErrors[id] = true;
-            renderApp();
-        };
-
-        // --- FUNGSI AKTIVITI ---
-        window.handleAddEvent = async (e) => {
-            e.preventDefault();
-            const title = document.getElementById('newEventTitle').value;
-            const time = document.getElementById('newEventTime').value;
-            const startDate = document.getElementById('newEventStartDate').value;
-            const endDate = document.getElementById('newEventEndDate').value;
-
-            if (!title || !startDate || !appState.user) return;
-
-            const newEvent = { 
-                startDate: startDate, 
-                endDate: endDate || startDate,
-                time: time,
-                personId: appState.activeTab, 
-                title: title, 
-                createdAt: Date.now() 
-            };
-            try {
-                await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events').add(newEvent);
-                // Form reset happens naturally via re-render
-            } catch (error) { console.error("Ralat ditambah:", error); }
-        };
-
-        window.handleDeleteEvent = async (id, event) => {
-            event.stopPropagation();
-            if (!appState.user) return;
-            try { 
-                await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events').doc(id).delete();
-            } catch (error) { console.error("Ralat dipadam:", error); }
-        };
-
-        window.handleUpdateEventSubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('editEventId').value;
-            const title = document.getElementById('editEventTitle').value;
-            const time = document.getElementById('editEventTime').value;
-            const startDate = document.getElementById('editEventStartDate').value;
-            const endDate = document.getElementById('editEventEndDate').value;
-
-            if (!id || !title || !startDate || !appState.user) return;
-            try {
-                await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events').doc(id).update({
-                    title: title, time: time, startDate: startDate, endDate: endDate || startDate
-                });
-                updateState({ editingEvent: null });
-            } catch (error) { console.error("Ralat kemaskini:", error); }
-        };
-
-        window.openEditModal = (eventId, eventObj) => {
-            eventObj.stopPropagation();
-            const ev = appState.events.find(e => e.id === eventId);
-            if(ev) updateState({ editingEvent: ev });
-        };
-
-        window.handleLoginSubmit = (e) => {
-            e.preventDefault();
-            const pwd = document.getElementById('passwordInput').value;
-            if (pwd === 'yahmat') {
-                updateState({ isUnlocked: true, showLoginModal: false });
-            } else {
-                const errEl = document.getElementById('pwdError');
-                errEl.classList.remove('hidden');
-                document.getElementById('passwordInput').classList.add('border-red-300', 'bg-red-50');
-            }
-        };
-
-        // --- RENDER ENGINE ---
-        const renderApp = () => {
-            let html = '';
-
-            // Latar belakang
-            if (appState.view === 'menu' || appState.view === 'calendar') {
-                document.body.classList.add('fun-bg');
-                bgDecorations.classList.remove('hidden');
-            } else {
-                document.body.classList.remove('fun-bg');
-                bgDecorations.classList.add('hidden');
-            }
-
-            if (appState.view === 'splash') {
-                html = `
-                    <div class="flex flex-col items-center justify-center min-h-screen bg-black p-6 fade-in">
-                        <div class="flex flex-col items-center group cursor-pointer" onclick="updateState({view: 'menu'})">
-                            <img src="a2c48970-2bea-4726-b2f2-8d787fe5987b.jpg" alt="The House of Rafeeq" class="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 object-contain rounded-full shadow-[0_0_40px_rgba(212,175,55,0.4)] border-2 border-[#d4af37] transition-all duration-300 transform hover:scale-105" />
-                        </div>
-                    </div>
-                `;
-            } 
-            else if (appState.view === 'menu') {
-                html = `
-                    <div class="flex flex-col items-center py-10 px-4 sm:px-6 fade-in relative z-10 w-full">
-                        <div class="mb-8 flex flex-col items-center">
-                            <img src="a2c48970-2bea-4726-b2f2-8d787fe5987b.jpg" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-[3px] border-[#d4af37] shadow-lg mb-3 object-cover bg-black" />
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight text-center drop-shadow-sm">Keluarga <span class="text-[#d4af37]">Rafeeq</span></h2>
-                        </div>
-
-                        <div class="w-full max-w-lg flex flex-col gap-4 sm:gap-5">
-                            <button onclick="updateState({activeTab: 'keseluruhan', view: 'calendar'})" class="w-full bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-between p-4 sm:p-5 shadow-lg transition-all active:scale-[0.98] border border-white/50" style="border-bottom-width: 4px; border-bottom-color: ${MENU_ALL.hex}">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full flex items-center justify-center shadow-inner bg-indigo-600">
-                                        <i data-lucide="calendar" class="w-6 h-6 text-white"></i>
-                                    </div>
-                                    <span class="font-bold text-lg sm:text-xl text-gray-800 drop-shadow-sm">Kalendar Keseluruhan</span>
-                                </div>
-                                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
-                            </button>
-
-                            <div class="grid grid-cols-3 gap-3 sm:gap-4 mt-2">
-                                ${['fateemah', 'irbadh', 'dewi'].map(id => {
-                                    const item = FAMILY_MEMBERS.find(i => i.id === id);
-                                    const hasError = appState.imageErrors[item.id];
-                                    const imgHTML = hasError 
-                                        ? `<span class="absolute text-white font-extrabold text-2xl z-0">${item.short.charAt(0)}</span>`
-                                        : `<span class="absolute text-white font-extrabold text-2xl z-0">${item.short.charAt(0)}</span><img src="${item.img}" class="w-full h-full object-cover relative z-10" onerror="handleImageError('${item.id}')" />`;
-                                    
-                                    return `
-                                    <button onclick="updateState({activeTab: '${item.id}', view: 'calendar'})" class="bg-white/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-4 sm:p-5 shadow-lg active:scale-95 border border-white/50" style="border-bottom-width: 4px; border-bottom-color: ${item.hex}">
-                                        <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ring-4 ring-offset-2 overflow-hidden relative" style="ring-color: ${item.hex}50; background-color: ${item.hex}">
-                                            ${imgHTML}
-                                        </div>
-                                        <span class="font-bold text-[13px] sm:text-sm text-gray-800 text-center drop-shadow-sm">${item.short}</span>
-                                    </button>`;
-                                }).join('')}
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-3 sm:gap-4 mt-1">
-                                ${['mama', 'babah'].map(id => {
-                                    const item = FAMILY_MEMBERS.find(i => i.id === id);
-                                    const hasError = appState.imageErrors[item.id];
-                                    const imgHTML = hasError 
-                                        ? `<span class="absolute font-extrabold text-3xl z-0" style="color: ${item.id === 'mama' ? '#5a4a15' : 'white'}">${item.short.charAt(0)}</span>`
-                                        : `<span class="absolute font-extrabold text-3xl z-0" style="color: ${item.id === 'mama' ? '#5a4a15' : 'white'}">${item.short.charAt(0)}</span><img src="${item.img}" class="w-full h-full object-cover relative z-10" onerror="handleImageError('${item.id}')" />`;
-                                    
-                                    return `
-                                    <button onclick="updateState({activeTab: '${item.id}', view: 'calendar'})" class="bg-white/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-4 sm:p-6 shadow-lg active:scale-95 border border-white/50" style="border-bottom-width: 4px; border-bottom-color: ${item.hex}">
-                                        <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 shadow-inner ring-4 ring-offset-2 overflow-hidden relative" style="ring-color: ${item.hex}50; background-color: ${item.hex}">
-                                            ${imgHTML}
-                                        </div>
-                                        <span class="font-bold text-base sm:text-lg text-gray-800 text-center drop-shadow-sm">${item.short}</span>
-                                    </button>`;
-                                }).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } 
-            else if (appState.view === 'calendar') {
-                const activeItemDetails = appState.activeTab === 'keseluruhan' ? MENU_ALL : FAMILY_MEMBERS.find(i => i.id === appState.activeTab);
-                
-                // --- BINA HEADER ---
-                html += `
-                    <div class="pb-10 fade-in relative z-10 w-full">
-                        <div class="bg-white/90 backdrop-blur-md border-b border-white/50 sticky top-0 z-20 shadow-sm rounded-b-[2.5rem]">
-                            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                                <h1 class="text-xl sm:text-2xl font-extrabold text-gray-800 tracking-tight text-center drop-shadow-sm">Kalendar <span class="text-[#d4af37]">Family</span></h1>
-                                <div class="flex items-center">
-                                    ${appState.isUnlocked 
-                                        ? `<button onclick="updateState({isUnlocked: false})" class="flex items-center gap-2 px-4 py-2 bg-red-50/90 text-red-600 rounded-full text-sm font-semibold border border-red-100 shadow-sm backdrop-blur-sm"><i data-lucide="unlock" class="w-4 h-4"></i> Kunci Semula</button>`
-                                        : `<button onclick="updateState({showLoginModal: true})" class="flex items-center gap-2 px-4 py-2 bg-slate-800/90 text-[#d4af37] rounded-full text-sm font-semibold shadow-sm backdrop-blur-sm"><i data-lucide="lock" class="w-4 h-4"></i> mamababah</button>`
-                                    }
-                                </div>
-                            </div>
-                            <div class="max-w-6xl mx-auto px-4 pb-4 pt-2 flex items-center justify-between">
-                                <button onclick="updateState({view: 'menu'})" class="flex items-center gap-2 px-4 py-2 bg-white/80 text-gray-600 rounded-full font-bold text-sm border border-gray-200 shadow-sm backdrop-blur-sm active:scale-95"><i data-lucide="chevron-left" class="w-4 h-4"></i> Menu</button>
-                                <div class="flex items-center gap-2 px-4 py-2 bg-white/80 border border-gray-200 rounded-full shadow-sm backdrop-blur-sm">
-                                    <span class="w-3 h-3 rounded-full shadow-inner" style="background-color: ${activeItemDetails.hex}"></span>
-                                    <span class="font-bold text-gray-800 text-sm">${activeItemDetails.short}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <main class="max-w-6xl mx-auto px-4 sm:px-6 pt-8 relative z-10">
-                `;
-
-                // --- BINA VIEW KALENDAR ---
-                if (appState.activeTab === 'keseluruhan') {
-                    const year = appState.currentDate.getFullYear();
-                    const month = appState.currentDate.getMonth();
-                    const daysInMonth = new Date(year, month + 1, 0).getDate();
-                    const firstDay = new Date(year, month, 1).getDay();
-
-                    let daysHtml = '';
-                    for (let i = 0; i < firstDay; i++) {
-                        daysHtml += `<div class="p-2 border border-transparent"></div>`;
-                    }
-
-                    for (let day = 1; day <= daysInMonth; day++) {
-                        const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                        const dayEvents = appState.events.filter(e => {
-                            const start = e.startDate || e.date;
-                            const end = e.endDate || e.date || start;
-                            return dateString >= start && dateString <= end;
+            // --- INIT FIREBASE LOGIC ---
+            useEffect(() => {
+                auth.signInAnonymously().catch(console.error);
+                const unsubscribeAuth = auth.onAuthStateChanged((u) => {
+                    setUser(u);
+                    if (u) {
+                        const unsubscribeDb = db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events')
+                          .onSnapshot((snapshot) => {
+                            const loadedEvents = [];
+                            snapshot.forEach((doc) => {
+                                loadedEvents.push({ id: doc.id, ...doc.data() });
+                            });
+                            loadedEvents.sort((a, b) => new Date(a.startDate || a.date) - new Date(b.startDate || b.date));
+                            setEvents(loadedEvents);
                         });
-
-                        let eventsHtml = dayEvents.map(event => {
-                            const person = FAMILY_MEMBERS.find(p => p.id === event.personId);
-                            return `<div class="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-sm truncate border ${person?.theme}" title="${event.title}">${event.time ? `<span class="font-semibold mr-1">${event.time}</span>` : ''}${event.title}</div>`;
-                        }).join('');
-
-                        daysHtml += `
-                            <div onclick="updateState({selectedDate: '${dateString}', showDayModal: true})" class="min-h-[80px] p-1 border border-white/60 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm flex flex-col cursor-pointer hover:bg-white transition-all hover:scale-[1.02]">
-                                <span class="text-sm font-bold text-gray-600 ml-1 drop-shadow-sm">${day}</span>
-                                <div class="flex flex-col gap-1 mt-1 flex-grow overflow-y-auto max-h-[80px] custom-scrollbar pointer-events-none">${eventsHtml}</div>
-                            </div>
-                        `;
+                        return () => unsubscribeDb();
                     }
+                });
+                return () => unsubscribeAuth();
+            }, []);
 
-                    html += `
-                        <div class="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-4 sm:p-6 mb-6">
-                            <div class="flex items-center justify-between mb-6">
-                                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="calendar" class="w-6 h-6 text-indigo-600"></i> Jadual Keseluruhan</h2>
-                                <div class="flex gap-2">
-                                    <button onclick="updateState({currentDate: new Date(${year}, ${month - 1}, 1)})" class="p-2 rounded-full bg-white/50 shadow-sm"><i data-lucide="chevron-left" class="w-5 h-5 text-gray-600"></i></button>
-                                    <div class="text-base sm:text-lg font-bold text-gray-800 min-w-[140px] text-center">${MONTH_NAMES[month]} ${year}</div>
-                                    <button onclick="updateState({currentDate: new Date(${year}, ${month + 1}, 1)})" class="p-2 rounded-full bg-white/50 shadow-sm"><i data-lucide="chevron-right" class="w-5 h-5 text-gray-600"></i></button>
+            const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+            const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+            const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+            const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (passwordInput === 'yahmat') {
+                    setIsUnlocked(true);
+                    setShowLoginModal(false);
+                    setPasswordInput('');
+                    setPasswordError('');
+                } else {
+                    setPasswordError('Kata laluan salah.');
+                }
+            };
+
+            const handleImageError = (id) => setImageErrors(prev => ({ ...prev, [id]: true }));
+
+            // --- LOGIK AKTIVITI ---
+            const handleAddEvent = async (e) => {
+                e.preventDefault();
+                if (!newEventTitle || !newEventStartDate || !user) return;
+                const newEvent = { 
+                    startDate: newEventStartDate, 
+                    endDate: newEventEndDate || newEventStartDate,
+                    time: newEventTime,
+                    personId: activeTab, 
+                    title: newEventTitle, 
+                    createdAt: Date.now() 
+                };
+                try {
+                    await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events').add(newEvent);
+                    setNewEventTitle(''); setNewEventTime(''); setNewEventStartDate(''); setNewEventEndDate('');
+                } catch (error) { console.error("Ralat menambah aktiviti:", error); }
+            };
+
+            const handleDeleteEvent = async (id) => {
+                if (!user) return;
+                try { 
+                    await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events').doc(id).delete();
+                } catch (error) { console.error("Ralat memadam aktiviti:", error); }
+            };
+
+            const handleUpdateEvent = async (e) => {
+                e.preventDefault();
+                if (!editingEvent || !editingEvent.title || !editingEvent.startDate || !user) return;
+                try {
+                    await db.collection('artifacts').doc(APP_ID).collection('public').doc('data').collection('events').doc(editingEvent.id).update({
+                        title: editingEvent.title,
+                        time: editingEvent.time,
+                        startDate: editingEvent.startDate,
+                        endDate: editingEvent.endDate || editingEvent.startDate
+                    });
+                    setEditingEvent(null);
+                } catch (error) { console.error("Ralat kemaskini aktiviti:", error); }
+            };
+
+            // --- KOMPONEN UI ---
+            const renderCalendarDays = () => {
+                const year = currentDate.getFullYear();
+                const month = currentDate.getMonth();
+                const daysInMonth = getDaysInMonth(year, month);
+                const firstDay = getFirstDayOfMonth(year, month);
+                const days = [];
+                
+                for (let i = 0; i < firstDay; i++) {
+                    days.push(<div key={`empty-${i}`} className="p-2 border border-transparent"></div>);
+                }
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                    const dayEvents = events.filter(e => {
+                        const start = e.startDate || e.date;
+                        const end = e.endDate || e.startDate || e.date;
+                        return dateString >= start && dateString <= end && (activeTab === 'keseluruhan' || e.personId === activeTab);
+                    });
+
+                    days.push(
+                        <div 
+                            key={day} 
+                            onClick={() => { setSelectedDate(dateString); setShowDayModal(true); }}
+                            className="min-h-[80px] p-1 border border-white/60 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm flex flex-col hover:bg-white hover:scale-[1.03] hover:shadow-md transition-all cursor-pointer group"
+                        >
+                            <span className="text-sm font-bold text-gray-600 ml-1 drop-shadow-sm group-hover:text-indigo-600 transition-colors">{day}</span>
+                            <div className="flex flex-col gap-1 mt-1 flex-grow overflow-y-auto max-h-[80px] custom-scrollbar pointer-events-none">
+                                {dayEvents.map(event => {
+                                    const person = FAMILY_MEMBERS.find(p => p.id === event.personId);
+                                    return (
+                                        <div key={event.id} className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded-sm truncate border ${person?.theme}`} title={`${event.title}${event.time ? ' (' + event.time + ')' : ''}`}>
+                                            {event.time && <span className="font-semibold mr-1">{event.time}</span>}
+                                            {event.title}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    );
+                }
+                return days;
+            };
+
+            const renderActiveCalendarView = () => {
+                if (activeTab === 'keseluruhan') {
+                    return (
+                        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-4 sm:p-6 mb-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                    <CalendarIcon className="w-6 h-6 text-indigo-600" />
+                                    Jadual Keseluruhan
+                                </h2>
+                                <div className="flex gap-2">
+                                    <button onClick={prevMonth} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors bg-white/50 shadow-sm active:scale-95"><ChevronLeft className="w-5 h-5" /></button>
+                                    <div className="text-base sm:text-lg font-bold text-gray-800 min-w-[140px] text-center flex items-center justify-center">
+                                        {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getFullYear()}
+                                    </div>
+                                    <button onClick={nextMonth} className="p-2 rounded-full hover:bg-gray-100 text-gray-600 transition-colors bg-white/50 shadow-sm active:scale-95"><ChevronRight className="w-5 h-5" /></button>
                                 </div>
                             </div>
-                            <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center">
-                                ${DAYS_SHORT.map(d => `<div class="text-xs sm:text-sm font-bold text-gray-500 py-2 uppercase">${d}</div>`).join('')}
+                            <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 text-center">
+                                {DAYS_SHORT.map(day => <div key={day} className="text-xs sm:text-sm font-bold text-gray-500 py-2 uppercase tracking-wider drop-shadow-sm">{day}</div>)}
                             </div>
-                            <div class="grid grid-cols-7 gap-1 sm:gap-2 bg-white/50 p-2 rounded-2xl border border-white/60">${daysHtml}</div>
+                            <div className="grid grid-cols-7 gap-1 sm:gap-2 bg-white/50 backdrop-blur-sm p-2 rounded-2xl border border-white/60">
+                                {renderCalendarDays()}
+                            </div>
                         </div>
-                    `;
-                } else {
-                    const person = FAMILY_MEMBERS.find(p => p.id === appState.activeTab);
-                    const personEvents = appState.events.filter(e => e.personId === appState.activeTab);
-                    
-                    let formHtml = '';
-                    if (appState.isUnlocked) {
-                        formHtml = `
-                            <div class="w-full md:w-1/3">
-                                <div class="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-6 sticky top-6 ${person.theme.split(' ')[2]}">
-                                    <h2 class="text-xl font-bold mb-4 flex items-center gap-2"><i data-lucide="plus" class="w-5 h-5"></i> Tambah Aktiviti</h2>
-                                    <form onsubmit="handleAddEvent(event)" class="space-y-4">
-                                        <div><label class="block text-sm font-semibold mb-1">Nama Aktiviti</label><input type="text" id="newEventTitle" required class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" /></div>
-                                        <div><label class="block text-sm font-semibold mb-1">Masa</label><input type="time" id="newEventTime" class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" /></div>
-                                        <div class="flex gap-3">
-                                            <div class="flex-1"><label class="block text-sm font-semibold mb-1">Mula</label><input type="date" id="newEventStartDate" required class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" /></div>
-                                            <div class="flex-1"><label class="block text-sm font-semibold mb-1">Hingga</label><input type="date" id="newEventEndDate" class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" /></div>
+                    );
+                }
+
+                const person = FAMILY_MEMBERS.find(p => p.id === activeTab);
+                const personEvents = events.filter(e => e.personId === activeTab).sort((a, b) => new Date(a.startDate || a.date) - new Date(b.startDate || b.date));
+
+                return (
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {isUnlocked && (
+                            <div className="w-full md:w-1/3">
+                                <div className={`bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-6 sticky top-6 ${person.theme.split(' ')[2]}`}>
+                                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                        <Plus className="w-5 h-5" /> Tambah Aktiviti
+                                    </h2>
+                                    <p className="text-sm text-gray-600 mb-6 font-medium">Aktiviti {person.short} akan masuk ke Kalendar Keseluruhan.</p>
+                                    <form onSubmit={handleAddEvent} className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Nama Aktiviti</label>
+                                            <input type="text" required className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-gray-800 bg-white/90" value={newEventTitle} onChange={(e) => setNewEventTitle(e.target.value)} />
                                         </div>
-                                        <button type="submit" class="w-full py-3 rounded-xl font-bold mt-2 shadow-md" style="background-color:${person.hex}; color:${person.id==='mama'?'#5a4a15':'white'}">Simpan Aktiviti</button>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Masa (Tak Wajib)</label>
+                                            <input type="time" className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-gray-800 bg-white/90" value={newEventTime} onChange={(e) => setNewEventTime(e.target.value)} />
+                                        </div>
+                                        <div className="flex gap-3">
+                                            <div className="flex-1">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Tarikh Mula</label>
+                                                <input type="date" required className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-gray-800 bg-white/90" value={newEventStartDate} onChange={(e) => setNewEventStartDate(e.target.value)} />
+                                            </div>
+                                            <div className="flex-1">
+                                                <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Tarikh Hingga</label>
+                                                <input type="date" className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-gray-800 bg-white/90" value={newEventEndDate} onChange={(e) => setNewEventEndDate(e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <button type="submit" className={`w-full py-3 px-4 rounded-xl font-bold text-white shadow-md transition-transform active:scale-95 mt-2`} style={{ backgroundColor: person.hex, color: person.id === 'mama' ? '#5a4a15' : 'white' }}>
+                                            Simpan Aktiviti
+                                        </button>
                                     </form>
                                 </div>
                             </div>
-                        `;
-                    }
-
-                    let listHtml = personEvents.length === 0 
-                        ? `<div class="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-300"><p class="text-gray-500 font-medium">Tiada aktiviti dijadualkan.</p></div>`
-                        : `<div class="space-y-3">` + personEvents.map(ev => {
-                            const startStr = new Date(ev.startDate || ev.date).toLocaleDateString('ms-MY', { weekday: 'short', month: 'short', day: 'numeric' });
-                            const endStr = new Date(ev.endDate || ev.date || ev.startDate).toLocaleDateString('ms-MY', { weekday: 'short', month: 'short', day: 'numeric' });
-                            const showEnd = ev.endDate && ev.endDate !== ev.startDate;
-                            
-                            const btns = appState.isUnlocked ? `
-                                <div class="flex gap-2">
-                                    <button onclick="openEditModal('${ev.id}', event)" class="p-2.5 bg-white/60 rounded-full text-blue-500 shadow-sm"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                                    <button onclick="handleDeleteEvent('${ev.id}', event)" class="p-2.5 bg-white/60 rounded-full text-red-500 shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                </div>` : '';
-
-                            return `
-                                <div class="flex items-center justify-between p-4 rounded-xl border bg-white/70 shadow-sm ${person.theme}">
-                                    <div class="flex flex-col">
-                                        <span class="font-bold text-lg">${ev.title} ${ev.time ? `<span class="text-sm opacity-80 ml-2">(${ev.time})</span>` : ''}</span>
-                                        <span class="text-sm opacity-80 mt-1">${startStr} ${showEnd ? `hingga ${endStr}` : ''}</span>
+                        )}
+                        <div className={`w-full ${isUnlocked ? 'md:w-2/3' : 'w-full'}`}>
+                            <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-6">
+                                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                                    <User className="w-5 h-5 text-gray-500" /> Senarai Aktiviti {person.name}
+                                </h2>
+                                {personEvents.length === 0 ? (
+                                    <div className="text-center py-10 bg-white/50 rounded-2xl border border-dashed border-gray-300">
+                                        <p className="text-gray-500 font-medium">Tiada aktiviti dijadualkan setakat ini.</p>
                                     </div>
-                                    ${btns}
-                                </div>
-                            `;
-                        }).join('') + `</div>`;
+                                ) : (
+                                    <div className="space-y-3">
+                                        {personEvents.map(event => {
+                                            const startDateStr = new Date(event.startDate || event.date).toLocaleDateString('ms-MY', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                                            const endDateStr = new Date(event.endDate || event.startDate || event.date).toLocaleDateString('ms-MY', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                                            const showEnd = (event.endDate && event.endDate !== event.startDate && event.endDate !== event.date);
 
-                    html += `
-                        <div class="flex flex-col md:flex-row gap-6">
-                            ${formHtml}
-                            <div class="w-full ${appState.isUnlocked ? 'md:w-2/3' : ''}">
-                                <div class="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/50 p-6">
-                                    <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><i data-lucide="user" class="w-5 h-5 text-gray-500"></i> Senarai Aktiviti ${person.name}</h2>
-                                    ${listHtml}
-                                </div>
+                                            return (
+                                                <div key={event.id} className={`flex items-center justify-between p-4 rounded-xl border bg-white/70 backdrop-blur-sm shadow-sm ${person.theme}`}>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-lg">{event.title} {event.time && <span className="text-sm font-normal opacity-80 ml-2">({event.time})</span>}</span>
+                                                        <span className="text-sm opacity-80 mt-1 font-medium">{startDateStr} {showEnd ? ` hingga ${endDateStr}` : ''}</span>
+                                                    </div>
+                                                    {isUnlocked && (
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => setEditingEvent(event)} className="p-2.5 bg-white/60 rounded-full hover:bg-blue-100 transition-colors text-blue-500 shadow-sm active:scale-95" title="Kemaskini"><EditIcon className="w-5 h-5" /></button>
+                                                            <button onClick={() => handleDeleteEvent(event.id)} className="p-2.5 bg-white/60 rounded-full hover:bg-red-100 transition-colors text-red-500 shadow-sm active:scale-95" title="Padam"><Trash2 className="w-5 h-5" /></button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    `;
-                }
-
-                html += `</main></div>`;
-            }
-
-            // --- MODALS ---
-            if (appState.showLoginModal) {
-                html += `
-                    <div class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
-                        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 fade-in">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="lock" class="w-5 h-5 text-[#d4af37]"></i> Sahkan Identiti</h3>
-                                <button onclick="updateState({showLoginModal: false})" class="p-2 bg-gray-50 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-                            </div>
-                            <form onsubmit="handleLoginSubmit(event)">
-                                <input type="password" id="passwordInput" class="w-full p-4 rounded-2xl border border-gray-200 bg-gray-50 mb-2 text-center text-lg tracking-widest font-mono" placeholder="••••••" />
-                                <p id="pwdError" class="text-red-500 text-sm mb-4 font-medium text-center hidden">Kata laluan salah.</p>
-                                <button type="submit" class="w-full py-4 bg-slate-900 text-[#d4af37] rounded-2xl font-bold shadow-lg text-lg">Buka Kunci</button>
-                            </form>
                         </div>
                     </div>
-                `;
-            }
+                );
+            };
 
-            if (appState.showDayModal && appState.selectedDate) {
-                const dayEvents = appState.events.filter(e => {
-                    const start = e.startDate || e.date;
-                    const end = e.endDate || e.date || start;
-                    return appState.selectedDate >= start && appState.selectedDate <= end && (appState.activeTab === 'keseluruhan' || e.personId === appState.activeTab);
-                });
-
-                let dayListHtml = dayEvents.length === 0 
-                    ? `<div class="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200"><p class="text-gray-500 font-medium text-lg">Tiada aktiviti hari ini. 🎉</p></div>`
-                    : dayEvents.map(ev => {
-                        const person = FAMILY_MEMBERS.find(p => p.id === ev.personId);
-                        const isMultiDay = ev.endDate && ev.endDate !== ev.startDate;
-                        const btns = appState.isUnlocked ? `
-                            <div class="flex gap-2">
-                                <button onclick="openEditModal('${ev.id}', event)" class="p-2.5 bg-white/60 rounded-full text-blue-500 shadow-sm"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                                <button onclick="handleDeleteEvent('${ev.id}', event)" class="p-2.5 bg-white/60 rounded-full text-red-500 shadow-sm"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                            </div>` : '';
-                        
-                        return `
-                            <div class="flex items-center justify-between p-4 rounded-xl border bg-white/70 shadow-sm ${person.theme}">
-                                <div class="flex flex-col">
-                                    <div class="flex items-center gap-2"><span class="font-bold text-lg">${ev.title}</span>${ev.time ? `<span class="text-xs font-bold px-2 py-1 rounded-md bg-white/60 shadow-sm">${ev.time}</span>` : ''}</div>
-                                    <span class="text-sm opacity-90 mt-1.5 font-medium flex items-center gap-1.5"><i data-lucide="user" class="w-4 h-4"></i> ${person.short} ${isMultiDay ? `<span class="ml-1 text-xs px-2 rounded-full bg-white/50 border border-white">(Berterusan)</span>` : ''}</span>
-                                </div>
-                                ${btns}
-                            </div>
-                        `;
-                    }).join('');
-
-                html += `
-                    <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onclick="updateState({showDayModal: false})">
-                        <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-6 fade-in" onclick="event.stopPropagation()">
-                            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
-                                <h3 class="text-xl sm:text-2xl font-extrabold text-gray-800 flex items-center gap-2"><i data-lucide="calendar" class="w-7 h-7 text-indigo-500"></i> ${new Date(appState.selectedDate).toLocaleDateString('ms-MY', { weekday: 'long', month: 'long', day: 'numeric' })}</h3>
-                                <button onclick="updateState({showDayModal: false})" class="p-2 bg-gray-100 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-                            </div>
-                            <div class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">${dayListHtml}</div>
+            // PAPARAN SPLASH SCREEN
+            if (appView === 'splash') {
+                return (
+                    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500 relative">
+                        <div className="flex flex-col items-center group cursor-pointer" onClick={() => setAppView('menu')}>
+                            <img src="a2c48970-2bea-4726-b2f2-8d787fe5987b.jpg" alt="The House of Rafeeq" className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 object-contain rounded-full shadow-[0_0_40px_rgba(212,175,55,0.4)] border-2 border-[#d4af37] transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-[0_0_60px_rgba(212,175,55,0.6)] group-active:scale-95 z-10 relative" />
                         </div>
                     </div>
-                `;
+                );
             }
 
-            if (appState.editingEvent) {
-                const ev = appState.editingEvent;
-                html += `
-                    <div class="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onclick="updateState({editingEvent: null})">
-                        <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-sm w-full p-6 fade-in" onclick="event.stopPropagation()">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i data-lucide="edit" class="w-6 h-6 text-indigo-500"></i> Kemaskini Aktiviti</h3>
-                                <button onclick="updateState({editingEvent: null})" class="p-2 bg-gray-50 rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
-                            </div>
-                            <form onsubmit="handleUpdateEventSubmit(event)" class="space-y-4">
-                                <input type="hidden" id="editEventId" value="${ev.id}">
-                                <div><label class="block text-sm font-semibold mb-1">Nama Aktiviti</label><input type="text" id="editEventTitle" required class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" value="${ev.title}" /></div>
-                                <div><label class="block text-sm font-semibold mb-1">Masa</label><input type="time" id="editEventTime" class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" value="${ev.time || ''}" /></div>
-                                <div class="flex gap-3">
-                                    <div class="flex-1"><label class="block text-sm font-semibold mb-1">Mula</label><input type="date" id="editEventStartDate" required class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" value="${ev.startDate || ev.date}" /></div>
-                                    <div class="flex-1"><label class="block text-sm font-semibold mb-1">Hingga</label><input type="date" id="editEventEndDate" class="w-full p-3 rounded-xl border border-gray-200 bg-white/90" value="${ev.endDate || ev.startDate || ev.date}" /></div>
+            // PAPARAN MENU MUKA
+            if (appView === 'menu') {
+                return (
+                    <div className="min-h-screen fun-bg flex flex-col items-center py-10 px-4 sm:px-6 animate-in fade-in zoom-in-95 duration-300 relative overflow-hidden">
+                        <BackgroundDecorations />
+                        <div className="mb-8 flex flex-col items-center relative z-10">
+                            <img src="a2c48970-2bea-4726-b2f2-8d787fe5987b.jpg" alt="Logo" className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-[3px] border-[#d4af37] shadow-[0_4px_20px_rgba(212,175,55,0.4)] mb-3 object-cover bg-black" />
+                            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-800 tracking-tight text-center drop-shadow-sm">Keluarga <span className="text-[#d4af37]">Rafeeq</span></h2>
+                        </div>
+                        <div className="w-full max-w-lg flex flex-col gap-4 sm:gap-5 relative z-10">
+                            <button onClick={() => { setActiveTab('keseluruhan'); setAppView('calendar'); }} className="w-full bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-between p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-xl transition-all active:scale-[0.98] border border-white/50 group" style={{ borderBottomWidth: '4px', borderBottomColor: MENU_ALL.hex }}>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-inner bg-indigo-600 group-hover:scale-110 transition-transform"><CalendarIcon className="w-6 h-6 text-white" /></div>
+                                    <span className="font-bold text-lg sm:text-xl text-gray-800 drop-shadow-sm">Kalendar Keseluruhan</span>
                                 </div>
-                                <button type="submit" class="w-full py-3 rounded-xl font-bold text-white bg-indigo-500 mt-2">Simpan Perubahan</button>
-                            </form>
+                                <ChevronRight className="w-5 h-5 text-gray-400" />
+                            </button>
+                            <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-2">
+                                {['fateemah', 'irbadh', 'dewi'].map(id => {
+                                    const item = FAMILY_MEMBERS.find(i => i.id === id);
+                                    const hasError = imageErrors[item.id];
+                                    return (
+                                        <button key={item.id} onClick={() => { setActiveTab(item.id); setAppView('calendar'); }} className="bg-white/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-4 sm:p-5 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-xl transition-all active:scale-95 border border-white/50 group relative overflow-hidden" style={{ borderBottomWidth: '4px', borderBottomColor: item.hex }}>
+                                            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ring-4 ring-offset-2 transition-transform group-hover:scale-110 overflow-hidden relative" style={{ ringColor: `${item.hex}50`, backgroundColor: item.hex }}>
+                                                <span className="absolute text-white font-extrabold text-2xl z-0">{item.short.charAt(0)}</span>
+                                                {!hasError && <img src={item.img} alt={item.short} className="w-full h-full object-cover relative z-10" onError={() => handleImageError(item.id)} />}
+                                            </div>
+                                            <span className="font-bold text-[13px] sm:text-sm text-gray-800 text-center drop-shadow-sm">{item.short}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-1">
+                                {['mama', 'babah'].map(id => {
+                                    const item = FAMILY_MEMBERS.find(i => i.id === id);
+                                    const hasError = imageErrors[item.id];
+                                    return (
+                                        <button key={item.id} onClick={() => { setActiveTab(item.id); setAppView('calendar'); }} className="bg-white/90 backdrop-blur-md rounded-2xl flex flex-col items-center justify-center p-4 sm:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:shadow-xl transition-all active:scale-95 border border-white/50 group relative overflow-hidden" style={{ borderBottomWidth: '4px', borderBottomColor: item.hex }}>
+                                            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 shadow-inner ring-4 ring-offset-2 transition-transform group-hover:scale-110 overflow-hidden relative" style={{ ringColor: `${item.hex}50`, backgroundColor: item.hex }}>
+                                                <span className="absolute font-extrabold text-3xl z-0" style={{color: item.id === 'mama' ? '#5a4a15' : 'white'}}>{item.short.charAt(0)}</span>
+                                                {!hasError && <img src={item.img} alt={item.short} className="w-full h-full object-cover relative z-10" onError={() => handleImageError(item.id)} />}
+                                            </div>
+                                            <span className="font-bold text-base sm:text-lg text-gray-800 text-center drop-shadow-sm">{item.short}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
-                `;
+                );
             }
 
-            container.innerHTML = html;
-            // Penting: Render SVG Lucide Icons setiap kali HTML ditukar
-            if (window.lucide) window.lucide.createIcons();
-        };
+            // PAPARAN UTAMA APP
+            return (
+                <div className="pb-10 animate-in slide-in-from-bottom-8 duration-500 relative fun-bg min-h-screen">
+                    <BackgroundDecorations />
 
-        // Render pertama
-        renderApp();
-    });
-</script>
+                    <div className="bg-white/90 backdrop-blur-md border-b border-white/50 sticky top-0 z-20 shadow-sm rounded-b-[2.5rem]">
+                        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                            <h1 className="text-xl sm:text-2xl font-extrabold text-gray-800 tracking-tight text-center drop-shadow-sm">Kalendar <span className="text-[#d4af37]">Family</span></h1>
+                            <div className="flex items-center">
+                                {isUnlocked ? (
+                                    <button onClick={() => setIsUnlocked(false)} className="flex items-center gap-2 px-4 py-2 bg-red-50/90 text-red-600 rounded-full text-sm font-semibold hover:bg-red-100 transition-all border border-red-100 shadow-sm backdrop-blur-sm"><Unlock className="w-4 h-4" /> Kunci Semula</button>
+                                ) : (
+                                    <button onClick={() => setShowLoginModal(true)} className="flex items-center gap-2 px-4 py-2 bg-slate-800/90 text-[#d4af37] rounded-full text-sm font-semibold hover:bg-slate-700 transition-all shadow-sm backdrop-blur-sm"><Lock className="w-4 h-4" /> mamababah</button>
+                                )}
+                            </div>
+                        </div>
+                        <div className="max-w-6xl mx-auto px-4 pb-4 pt-2 flex items-center justify-between">
+                            <button onClick={() => setAppView('menu')} className="flex items-center gap-2 px-4 py-2 bg-white/80 text-gray-600 rounded-full hover:bg-white transition-colors font-bold text-sm border border-gray-200 shadow-sm active:scale-95 backdrop-blur-sm"><ChevronLeft className="w-4 h-4" /> Menu</button>
+                            <div className="flex items-center gap-2 px-4 py-2 bg-white/80 border border-gray-200 rounded-full shadow-sm backdrop-blur-sm">
+                                <span className="w-3 h-3 rounded-full shadow-inner" style={{backgroundColor: activeItemDetails.hex}}></span>
+                                <span className="font-bold text-gray-800 text-sm">{activeItemDetails.short}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-8 relative z-10">
+                        {renderActiveCalendarView()}
+                    </main>
+                    
+                    {/* MODAL LOGIN */}
+                    {showLoginModal && (
+                        <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+                            <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2"><Lock className="w-5 h-5 text-[#d4af37]" /> Sahkan Identiti</h3>
+                                    <button onClick={() => {setShowLoginModal(false); setPasswordError(''); setPasswordInput('');}} className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><XIcon className="w-5 h-5" /></button>
+                                </div>
+                                <form onSubmit={handleLogin}>
+                                    <input type="password" className={`w-full p-4 rounded-2xl border ${passwordError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'} mb-2 focus:ring-2 focus:ring-[#d4af37] outline-none transition-colors text-gray-800 text-center text-lg tracking-widest font-mono`} placeholder="••••••" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} autoFocus />
+                                    {passwordError ? <p className="text-red-500 text-sm mb-4 font-medium text-center">{passwordError}</p> : <div className="mb-4"></div>}
+                                    <button type="submit" className="w-full py-4 px-4 bg-slate-900 text-[#d4af37] rounded-2xl font-bold shadow-lg hover:bg-slate-800 transition-colors text-lg">Buka Kunci</button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MODAL HARI (DAY VIEW) */}
+                    {showDayModal && selectedDate && (
+                        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowDayModal(false)}>
+                            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200 border border-white/50" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
+                                    <h3 className="text-xl sm:text-2xl font-extrabold text-gray-800 flex items-center gap-2">
+                                        <CalendarIcon className="w-7 h-7 text-indigo-500 drop-shadow-sm" />
+                                        {new Date(selectedDate).toLocaleDateString('ms-MY', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                    </h3>
+                                    <button onClick={() => setShowDayModal(false)} className="p-2 bg-gray-100 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-200 transition-colors"><XIcon className="w-5 h-5" /></button>
+                                </div>
+                                
+                                <div className="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-2">
+                                    {(() => {
+                                        const dayEvents = events.filter(e => {
+                                            const start = e.startDate || e.date;
+                                            const end = e.endDate || e.startDate || e.date;
+                                            return selectedDate >= start && selectedDate <= end && (activeTab === 'keseluruhan' || e.personId === activeTab);
+                                        });
+
+                                        if (dayEvents.length === 0) {
+                                            return (
+                                                <div className="text-center py-10 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
+                                                    <p className="text-gray-500 font-medium text-lg">Tiada aktiviti hari ini. 🎉</p>
+                                                </div>
+                                            );
+                                        }
+
+                                        return dayEvents.map(event => {
+                                            const person = FAMILY_MEMBERS.find(p => p.id === event.personId);
+                                            const isMultiDay = (event.endDate && event.endDate !== event.startDate && event.endDate !== event.date);
+                                            
+                                            return (
+                                                <div key={event.id} className={`flex items-center justify-between p-4 rounded-xl border bg-white/70 backdrop-blur-sm shadow-sm ${person.theme}`}>
+                                                    <div className="flex flex-col">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-bold text-lg">{event.title}</span>
+                                                            {event.time && <span className="text-xs font-bold px-2 py-1 rounded-md bg-white/60 shadow-sm">{event.time}</span>}
+                                                        </div>
+                                                        <span className="text-sm opacity-90 mt-1.5 font-medium flex items-center gap-1.5">
+                                                            <User className="w-4 h-4" /> {person.short}
+                                                            {isMultiDay && <span className="ml-1 text-xs px-2 py-0.5 rounded-full bg-white/50 border border-white opacity-80">(Berterusan)</span>}
+                                                        </span>
+                                                    </div>
+                                                    {isUnlocked && (
+                                                        <div className="flex gap-2">
+                                                            <button onClick={() => setEditingEvent(event)} className="p-2.5 bg-white/60 rounded-full hover:bg-blue-100 transition-colors text-blue-500 shadow-sm active:scale-95" title="Kemaskini"><EditIcon className="w-5 h-5" /></button>
+                                                            <button onClick={() => handleDeleteEvent(event.id)} className="p-2.5 bg-white/60 rounded-full hover:bg-red-100 transition-colors text-red-500 shadow-sm active:scale-95" title="Padam"><Trash2 className="w-5 h-5" /></button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            );
+                                        });
+                                    })()}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MODAL KEMASKINI (EDIT) */}
+                    {editingEvent && (
+                        <div className="fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setEditingEvent(null)}>
+                            <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-sm w-full p-6 animate-in fade-in zoom-in duration-200 border border-white/50" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2"><EditIcon className="w-6 h-6 text-indigo-500 drop-shadow-sm" /> Kemaskini Aktiviti</h3>
+                                    <button onClick={() => setEditingEvent(null)} className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><XIcon className="w-5 h-5" /></button>
+                                </div>
+                                <form onSubmit={handleUpdateEvent} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Nama Aktiviti</label>
+                                        <input type="text" required className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all text-gray-800 bg-white/90" value={editingEvent.title} onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Masa (Tak Wajib)</label>
+                                        <input type="time" className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all text-gray-800 bg-white/90" value={editingEvent.time || ''} onChange={(e) => setEditingEvent({...editingEvent, time: e.target.value})} />
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <div className="flex-1">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Tarikh Mula</label>
+                                            <input type="date" required className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all text-gray-800 bg-white/90" value={editingEvent.startDate} onChange={(e) => setEditingEvent({...editingEvent, startDate: e.target.value})} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="block text-sm font-semibold text-gray-700 mb-1 drop-shadow-sm">Tarikh Hingga</label>
+                                            <input type="date" className="w-full p-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-all text-gray-800 bg-white/90" value={editingEvent.endDate || ''} onChange={(e) => setEditingEvent({...editingEvent, endDate: e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <button type="submit" className="w-full py-3 px-4 rounded-xl font-bold text-white shadow-md transition-transform active:scale-95 mt-2 bg-indigo-500 hover:bg-indigo-600">Simpan Perubahan</button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>

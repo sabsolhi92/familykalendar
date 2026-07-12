@@ -120,6 +120,9 @@
             const [appView, setAppView] = useState('splash'); 
             const [activeTab, setActiveTab] = useState('keseluruhan');
             
+            // PENYELESAIAN MASALAH: Memastikan activeItemDetails sentiasa wujud untuk semua view
+            const activeItemDetails = activeTab === 'keseluruhan' ? MENU_ALL : FAMILY_MEMBERS.find(i => i.id === activeTab);
+
             const [events, setEvents] = useState([]);
             const [user, setUser] = useState(null);
             const [currentDate, setCurrentDate] = useState(new Date());
